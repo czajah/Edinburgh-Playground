@@ -28,3 +28,7 @@ rect {
 .link {
     stroke : #8C8C8C ;
 }
+
+.fixed{
+    stroke-width: 2.0px;
+}
