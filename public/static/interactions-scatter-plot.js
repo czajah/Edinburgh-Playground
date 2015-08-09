@@ -35,6 +35,9 @@ InteractionsScatterPlot.prototype.draw = function(){
 
     $(this.targetSelector).html("")
 
+    var exportButton = $('<input style="display: block;" id="scatter-to-png" type="button" value="export as image"/>')
+    $(this.targetSelector).append(exportButton)
+
     var styles;
     jQuery.ajax({
         url:    'interactions-scatter-plot.css',
@@ -50,6 +53,8 @@ InteractionsScatterPlot.prototype.draw = function(){
         .attr("height", this.height + this.margin.top + this.margin.bottom)
         .append("g")
         .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
+    toPNGButton(exportButton,this.targetSelector+" svg")
 
     svg.append("defs").append("style").attr("type","text/css").text(styles)
 

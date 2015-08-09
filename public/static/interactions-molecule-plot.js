@@ -37,6 +37,10 @@ InteractionsMoleculePlot.prototype.draw = function(){
 
     $(this.targetSelector).html("")
 
+    var exportButton = $('<input style="display: block;" id="scatter-to-png" type="button" value="export as image"/>')
+    $(this.targetSelector).append(exportButton)
+
+
     var self = this
     var combinedFilterFunction = function(d){
         for(var ff in self.filterFunctions){
@@ -91,6 +95,7 @@ InteractionsMoleculePlot.prototype.draw = function(){
         .append("g")
         .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
+    toPNGButton(exportButton,this.targetSelector+" svg")
 
     var styles;
     jQuery.ajax({
