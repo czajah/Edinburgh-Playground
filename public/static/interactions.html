@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Interactions graphs</title>
+
+    <link rel="stylesheet" href="../libraries/jquery-ui-1.11.4/jquery-ui.css">
+    <script src="../libraries/jquery-2.1.3.js"></script>
+    <script src="../libraries/jquery-ui-1.11.4/jquery-ui.js"></script>
+    <script src="../libraries/d3.js"></script>
+
+    <script src="filters.js"></script>
+    <script src="interactions.js"></script>
+    <script src="interactions-scatter-plot.js"></script>
+    <script src="interactions-molecule-plot.js"></script>
+
+
+</head>
+<body>
+    <div>
+        <input type="file" id="fileinput" />
+    </div>
+
+    <div id="scatter-plot-container" style="display: inline-block;"></div>
+
+    <div id="coeffs-slider-value">&nbsp;</div>
+    <div id="coeffs-slider-container" style="margin: 20px;"></div>
+
+    <div id="molecule-plot-container" style="display: inline-block;"></div>
+
+    <script>
+        var sequence ="GUCGACGUACUUCAUAGGAUCAUUUCUAUAGGAAUCGUCACUCUUUGACUCUUCAAAAGAGCCACUGAAUCCAACUUGGUUGAUGAGUCCCAUAACCUUUGUACCCCAGAGUGAGAAACCGAAAUUGAAUCUAAAUUAGCUUGGUCCGCAAUCCUUAGCGGUUCGGCCAUCUAUAAUUUUGAAUAAAAAUUUUGCUUUGCCGUUGCAUUUGUAGUUUUUUCCUUUGGAAGUAAUUACAAUAUUUUAUGGCGCGAUGAUCUUGACCCAUCCUAUGUACUUCUUUUUUGAAGGGAUAGGGCUCUAUGGGUGGGUACAAAUGGCAGUCUGACAAGU"
+        var viena="....(((..(.(.((((.(....).))))).)...)))..........(((((...)))))............(((((......((.(.......((((((((((((..((...((((.(((((((...((.((((((...(((.(((.((((......))))))))))....)))))).)).....))))))).)))(((.(...(((((((.((..((((...))))..)).))))).))...).))).)......)).)(((((((((((...((((......))))..)))))).....)))))))))))))).)).).))...)))))"
+
+
+        $("#fileinput").change(function(){
+            var file = $("#fileinput").get()[0].files[0]
+
+            var reader = new FileReader();
+            reader.readAsText(file, "UTF-8");
+
+            reader.onload = function loaded(evt) {
+                var fileString = evt.target.result;
+                drawAll(d3.tsv.parse(fileString))
+            }
+        })
+
+        function drawAll(paramData) {
+                var interactions = new InteractionsData(paramData)
+
+                var scatterPlot = new InteractionsScatterPlot(interactions, "#scatter-plot-container",400,400)
+
+                scatterPlot.pointLabel = function(d){
+                    return d.mutation_1+"["+sequence[d.mutation_1-1]+"]"+" <-> "+ d.mutation_2+"["+sequence[d.mutation_2-1]+"]"+" : "+ d.regression_coeff;
+                }
+
+                var coeffsSlider = new SliderRangeFilter("#coeffs-slider-container",interactions.min_regression_coeff,interactions.max_regression_coeff,0.000001)
+
+                coeffsSlider.onSlide = function(min,max){
+                    $("#coeffs-slider-value").html(min+" - "+max)
+                }
+
+                coeffsSlider.onChange = function(min,max){
+                    $("#coeffs-slider-value").html(min+" - "+max)
+                    scatterPlot.draw()
+                }
+
+                var coeffFilterFunction = coeffsSlider.getFilterFunction(function(min,max,d){
+                    return d.regression_coeff>=min && d.regression_coeff<=max
+                })
+
+                scatterPlot.addFilter(coeffFilterFunction)
+
+                scatterPlot.draw()
+
+
+                var moleculePlot = new InteractionsMoleculePlot(interactions,viena,sequence, "#molecule-plot-container",1000,1000)
+                moleculePlot.draw()
+        }
+
+    </script>
+</body>
+</html>

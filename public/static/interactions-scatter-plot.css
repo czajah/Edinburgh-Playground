@@ -1,0 +1,19 @@
+.interactions-scatter-plot .axis path,
+.interactions-scatter-plot .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.interactions-scatter-plot .dot {
+    stroke: #000;
+}
+
+svg.interactions-scatter-plot {
+    border: 1px solid #cdcdcd;
+    border-color: rgba(0,0,0,.15);
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    background: #ffffff;
+}

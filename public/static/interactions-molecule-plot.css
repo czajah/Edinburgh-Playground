@@ -1,0 +1,30 @@
+svg {
+    border: 1px solid #cdcdcd;
+    border-color: rgba(0,0,0,.15);
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    background: #ffffff;
+}
+
+rect {
+
+    fill : none ;
+    pointer-events : all ;
+}
+
+.node {
+    stroke: #000;
+    fill : white;
+    pointer-events : all;
+}
+
+.node text {
+    fill : black ;
+    pointer-events : all;
+    font : 10 px sans-serif ;
+}
+
+.link {
+    stroke : #8C8C8C ;
+}
