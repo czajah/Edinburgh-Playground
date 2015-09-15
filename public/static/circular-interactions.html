@@ -24,8 +24,8 @@
 
 </head>
 <body>
-    <div>
-        <input type="file" id="fileinput" />
+    <div id="inputs">
+        <input type="file" id="fileinput"/>
     </div>
 
     <div id="plot-container" style="display: inline-block;"></div>
@@ -35,21 +35,45 @@
         var viena="....(((..(.(.((((.(....).))))).)...)))..........(((((...)))))............(((((......((.(.......((((((((((((..((...((((.(((((((...((.((((((...(((.(((.((((......))))))))))....)))))).)).....))))))).)))(((.(...(((((((.((..((((...))))..)).))))).))...).))).)......)).)(((((((((((...((((......))))..)))))).....)))))))))))))).)).).))...)))))"
 
 
-        $("#fileinput").change(function(){
-            var file = $("#fileinput").get()[0].files[0]
-
+        function onFileLoadCallback(fileInput,tsvParsedDataCallback){
+            var file = $(fileInput).get()[0].files[0]
+            console.log(fileInput)
+            console.log(file)
             var reader = new FileReader();
             reader.readAsText(file, "UTF-8");
 
             reader.onload = function loaded(evt) {
                 var fileString = evt.target.result;
-                drawAll(d3.tsv.parse(fileString))
+                tsvParsedDataCallback(d3.tsv.parse(fileString))
             }
+        }
+
+        $("#fileinput").change(function(){
+            onFileLoadCallback("#fileinput",function(parsedData){
+                var positionsArray = drawMiddleRingAndChords(parsedData)
+                var outerRingDataInput = $("<input type='file' id='fileinput-outerRing' />")
+                $("#inputs").append(outerRingDataInput).change(function(){
+                    onFileLoadCallback(outerRingDataInput,function(parsedData){
+                        drawOuterRing(parsedData,positionsArray)
+                    })
+                })
+
+                var innerRingDataInput = $("<input type='file' id='fileinput-innerRing' />")
+                $("#inputs").append(innerRingDataInput).change(function(){
+                    onFileLoadCallback(innerRingDataInput,function(parsedData){
+                        drawInnerRing(parsedData,positionsArray)
+                    })
+                })
+
+            })
+
         })
 
     </script>
 
 <script>
+
+
 
     function preparePositionsArray(sequence){
         var resultArray = []
@@ -80,7 +104,6 @@
     function prepareInteractionsArray(positionsArray, interactions) {
         var resultArray = []
         for(var i=0; i!=positionsArray.length;++i){
-//            if(i>15)continue
             var startPositionData = positionsArray[i]
             var interactionsArray = interactions.coeffs[i]
             if(interactionsArray) {
@@ -96,8 +119,8 @@
                         var endPositionData = positionsArray[j]
                         var target = {
                             position: j,
-                            startAngle: endPositionData.startAngle,
-                            endAngle: endPositionData.endAngle
+                            startAngle: (endPositionData.startAngle+endPositionData.endAngle)/2,
+                            endAngle: (endPositionData.startAngle+endPositionData.endAngle)/2
                         }
 
                         resultArray.push({
@@ -112,23 +135,25 @@
         return resultArray;
     }
 
-    function drawAll(paramData){
+
+    var width = 1200,
+            height = 900,
+            innerRadius = Math.min(width, height) * .37,
+            outerRadius = innerRadius * 1.1;
+
+    var fill = d3.scale.ordinal()
+            .domain(d3.range(4))
+            .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
+
+    var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+    function drawMiddleRingAndChords(paramData){
         var interactions = new InteractionsData(paramData)
-
-        var width = 1200,
-                height = 900,
-                innerRadius = Math.min(width, height) * .41,
-                outerRadius = innerRadius * 1.1;
-
-        var fill = d3.scale.ordinal()
-                .domain(d3.range(4))
-                .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
-
-        var svg = d3.select("body").append("svg")
-                .attr("width", width)
-                .attr("height", height)
-                .append("g")
-                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
         var positionsArray = appendLayoutData(preparePositionsArray(sequence))
         var interactionsArray = prepareInteractionsArray(positionsArray,interactions)
@@ -144,15 +169,38 @@
                     $(".chord path[targetPosition="+ d.position+"]").css("opacity",1)
                 })
                 .on("mouseout", function(d){
-                    $(".chord path").css("opacity",0)
+                    $(".chord path").css("opacity",0.1)
                 });
+
+        svg.append("g").selectAll("path")
+                .data([{
+                    startAngle:0,
+                    endAngle:2*Math.PI
+                }])
+                .enter().append("path")
+                .style("fill", function(d) { return "green"})
+                .style("stroke", function(d) { return "green"})
+                .attr("d", d3.svg.arc().innerRadius(outerRadius+40).outerRadius(outerRadius+41))
+
+        svg.append("g").selectAll("path")
+                .data([{
+                    startAngle:0,
+                    endAngle:2*Math.PI
+                }])
+                .enter().append("path")
+                .style("fill", function(d) { return "green"})
+                .style("stroke", function(d) { return "green"})
+                .attr("d", d3.svg.arc().innerRadius(innerRadius-41).outerRadius(innerRadius-40))
+
 
         function ticks(positionsArray,step){
             var resultArray = []
             var length = positionsArray.length
+            console.log("1")
             for(var i=0;i<length;i+=step){
                 var d = positionsArray[i]
                 var angle = ((d.endAngle - d.startAngle) / 2) + d.startAngle;
+                console.log("2")
                 resultArray.push({
                     angle:angle,
                     label: i
@@ -161,11 +209,15 @@
             return resultArray
         }
 
+        var ticksData = ticks(positionsArray,20)
+        console.log("ticksData")
+        console.log(ticksData)
         var ticks = svg.append("g").selectAll("g")
-                .data(ticks(positionsArray,20))
+                .data(ticksData)
                 .enter().append("g")
                 .attr("transform", function(d) {
-                    var translate = outerRadius + (0.01*outerRadius)
+
+                    var translate = outerRadius + 50
                     return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
                             + "translate(" + translate + ",0)";
                 });
@@ -189,11 +241,18 @@
                 .selectAll("path")
                 .data(interactionsArray)
                 .enter().append("path")
-                .attr("d", d3.svg.chord().radius(innerRadius))
+                .attr("d", d3.svg.chord().radius(innerRadius-41))
                 .attr("sourcePosition",function(d){return d.source.position})
                 .attr("targetPosition",function(d){return d.target.position})
-                .style("fill", "red")
-                .style("opacity", 0.0);
+                .style("fill", function(d){
+                    var interactionScore = interactions.coeffs[d.source.position][d.target.position]
+                    console.log(interactionScore)
+                    if(interactionScore>=0)
+                        return "black"
+                    else
+                        return "yellow"
+                })
+                .style("opacity", 0.1);
 
 //        function fade(opacity) {
 //            return function(g, i) {
@@ -203,6 +262,143 @@
 //                        .style("opacity", opacity);
 //            };
 //        }
+
+        return positionsArray;
+    }
+
+
+
+
+
+
+
+    function drawOuterRing(paramData,positionsArray){
+        console.log("drawOuterRing()")
+
+        function appendLayoutData(paramDataArray, positionsArray){
+            var resultArray = []
+            var length = positionsArray.length
+            function valueExtractor(datum){return +datum.value}
+            var maxValue = d3.max(paramDataArray,valueExtractor)
+            var minValue = d3.min(paramDataArray,valueExtractor)
+            for(var i=0;i!=paramDataArray.length;++i){
+                var positionData = positionsArray[+paramDataArray[i].position]
+                var fraction = (paramDataArray[i].value/maxValue)
+                var copy = $.extend( {}, paramDataArray[i])
+                resultArray[i] = copy
+                resultArray[i].outerRadius = outerRadius+(40*fraction)
+                resultArray[i].startAngle=positionData.startAngle;
+                resultArray[i].endAngle=positionData.endAngle;
+            }
+            return resultArray;
+        }
+
+        paramData = appendLayoutData(paramData,positionsArray)
+
+
+
+        console.log(paramData)
+        console.log(positionsArray)
+
+        var div = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+
+        svg.append("g").selectAll("path")
+                .data(paramData)
+                .enter().append("path")
+                .style("fill", function(d) { return d.position%2==0?"#CDB831":"brown"})//fill(d.index); })
+                .style("stroke", function(d) { return "green"})//fill(d.index); })
+                .attr("d", d3.svg.arc().innerRadius(outerRadius))
+
+                .on("mouseover", function(d){
+                    div.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                    div	.html(""+d.value)
+                            .style("left", (d3.event.pageX) + "px")
+                            .style("top", (d3.event.pageY - 28) + "px");
+
+                })
+                .on("mousemove", function(d){
+                    div
+                            .style("left", (d3.event.pageX) + "px")
+                            .style("top", (d3.event.pageY - 28) + "px");
+
+                })
+                .on("mouseout", function(d){
+                    div.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                });
+
+    }
+
+    function drawInnerRing(paramData,positionsArray){
+        console.log("drawInnerRing()")
+        console.log(paramData)
+
+        function copyWithLayoutData(paramDataArray, positionsArray){
+            var resultArray = []
+            var length = positionsArray.length
+            function valueExtractor(datum){return +datum.value}
+            var maxValue = d3.max(paramDataArray,valueExtractor)
+            var minValue = d3.min(paramDataArray,valueExtractor)
+            for(var i=0;i!=paramDataArray.length;++i){
+                var positionData = positionsArray[+paramDataArray[i].position]
+                var fraction = (paramDataArray[i].value/maxValue)
+                var copy = $.extend( {}, paramDataArray[i])
+                resultArray[i] = copy
+                resultArray[i].outerRadius = innerRadius
+                resultArray[i].innerRadius = innerRadius-(40*fraction)
+                resultArray[i].startAngle=positionData.startAngle;
+                resultArray[i].endAngle=positionData.endAngle;
+            }
+            return resultArray;
+        }
+
+        paramData = copyWithLayoutData(paramData,positionsArray)
+
+
+
+        console.log(paramData)
+        console.log(positionsArray)
+
+        var div = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+
+        svg.append("g").selectAll("path")
+                .data(paramData)
+                .enter().append("path")
+                .style("fill", function(d) { return d.position%2==0?"#EF47FF":"blue"})//fill(d.index); })
+                .style("stroke", function(d) { return "green"})//fill(d.index); })
+                .attr("d", d3.svg.arc())
+
+                .on("mouseover", function(d){
+                    div.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                    div	.html(""+d.value)
+                            .style("left", (d3.event.pageX) + "px")
+                            .style("top", (d3.event.pageY - 28) + "px");
+
+                })
+                .on("mousemove", function(d){
+                    div
+                            .style("left", (d3.event.pageX) + "px")
+                            .style("top", (d3.event.pageY - 28) + "px");
+
+                })
+                .on("mouseout", function(d){
+                    div.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                });
+
+
     }
 
 
