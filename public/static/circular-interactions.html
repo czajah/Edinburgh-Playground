@@ -40,7 +40,11 @@
             console.log(fileInput)
             console.log(file)
             var reader = new FileReader();
-            reader.readAsText(file, "UTF-8");
+            try {
+                reader.readAsText(file, "UTF-8");
+            }catch(ignore){
+                console.warn(ignore)
+            }
 
             reader.onload = function loaded(evt) {
                 var fileString = evt.target.result;
