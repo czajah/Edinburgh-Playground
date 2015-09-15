@@ -1,0 +1,21 @@
+svg {
+    border: 1px solid #cdcdcd;
+    border-color: rgba(0,0,0,.15);
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    background: #ffffff;
+}
+
+body {
+    font: 10px sans-serif;
+}
+
+.chord {
+    /*opacity: 0.1;*/
+}
+.chord path {
+    fill-opacity: .67;
+    stroke: #000;
+    stroke-width: .5px;
+}

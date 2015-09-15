@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Interactions graphs</title>
+
+    <link rel="stylesheet" href="interactions-circular-plot.css">
+
+    <link rel="stylesheet" href="../libraries/jquery-ui-1.11.4/jquery-ui.css">
+    <script src="../libraries/jquery-2.1.3.js"></script>
+    <script src="../libraries/jquery-ui-1.11.4/jquery-ui.js"></script>
+    <script src="../libraries/d3.js"></script>
+    <script type="text/javascript" src="../libraries/canvg/rgbcolor.js"></script>
+    <script type="text/javascript" src="../libraries/canvg/StackBlur.js"></script>
+    <script type="text/javascript" src="../libraries/canvg/canvg.js"></script>
+
+
+    <script src="utils.js"></script>
+    <script src="slider-range-filter.js"></script>
+    <script src="interactions.js"></script>
+    <script src="interactions-scatter-plot.js"></script>
+    <script src="interactions-molecule-plot.js"></script>
+
+
+</head>
+<body>
+    <div>
+        <input type="file" id="fileinput" />
+    </div>
+
+    <div id="plot-container" style="display: inline-block;"></div>
+
+    <script>
+        var sequence ="GUCGACGUACUUCAUAGGAUCAUUUCUAUAGGAAUCGUCACUCUUUGACUCUUCAAAAGAGCCACUGAAUCCAACUUGGUUGAUGAGUCCCAUAACCUUUGUACCCCAGAGUGAGAAACCGAAAUUGAAUCUAAAUUAGCUUGGUCCGCAAUCCUUAGCGGUUCGGCCAUCUAUAAUUUUGAAUAAAAAUUUUGCUUUGCCGUUGCAUUUGUAGUUUUUUCCUUUGGAAGUAAUUACAAUAUUUUAUGGCGCGAUGAUCUUGACCCAUCCUAUGUACUUCUUUUUUGAAGGGAUAGGGCUCUAUGGGUGGGUACAAAUGGCAGUCUGACAAGU"
+        var viena="....(((..(.(.((((.(....).))))).)...)))..........(((((...)))))............(((((......((.(.......((((((((((((..((...((((.(((((((...((.((((((...(((.(((.((((......))))))))))....)))))).)).....))))))).)))(((.(...(((((((.((..((((...))))..)).))))).))...).))).)......)).)(((((((((((...((((......))))..)))))).....)))))))))))))).)).).))...)))))"
+
+
+        $("#fileinput").change(function(){
+            var file = $("#fileinput").get()[0].files[0]
+
+            var reader = new FileReader();
+            reader.readAsText(file, "UTF-8");
+
+            reader.onload = function loaded(evt) {
+                var fileString = evt.target.result;
+                drawAll(d3.tsv.parse(fileString))
+            }
+        })
+
+    </script>
+
+<script>
+
+    function preparePositionsArray(sequence){
+        var resultArray = []
+        for(var i=0;i<=sequence.length;++i){
+            var positionData = {
+                position: i,
+                nucleotide: sequence[i]
+            }
+
+            resultArray[i] = positionData
+        }
+        return resultArray
+    }
+
+    function appendLayoutData(positionsArray){
+        var length = positionsArray.length
+        console.log("length: "+length)
+
+        var step = 2*Math.PI/length;
+        console.log("step: "+step)
+        for(var i=0;i!=positionsArray.length;++i){
+            positionsArray[i].startAngle=i*step;
+            positionsArray[i].endAngle=i*step+step;
+        }
+        return positionsArray;
+    }
+
+    function prepareInteractionsArray(positionsArray, interactions) {
+        var resultArray = []
+        for(var i=0; i!=positionsArray.length;++i){
+//            if(i>15)continue
+            var startPositionData = positionsArray[i]
+            var interactionsArray = interactions.coeffs[i]
+            if(interactionsArray) {
+                var source = {
+                    position: i,
+                    startAngle: startPositionData.startAngle,
+                    endAngle: startPositionData.endAngle
+                }
+
+                for (var j = i+1; j < interactionsArray.length; ++j) {
+                    var coeff = interactionsArray[j]
+                    if (coeff) {
+                        var endPositionData = positionsArray[j]
+                        var target = {
+                            position: j,
+                            startAngle: endPositionData.startAngle,
+                            endAngle: endPositionData.endAngle
+                        }
+
+                        resultArray.push({
+                            source: source,
+                            target: target
+                        })
+                    }
+                }
+            }
+        }
+
+        return resultArray;
+    }
+
+    function drawAll(paramData){
+        var interactions = new InteractionsData(paramData)
+
+        var matrix = interactions.getInteractionsMatrix(20)
+
+        console.log(matrix)
+
+//        matrix = [
+//            [null,  1, null, null],
+//            [ null, null, 1, null],
+//            [ null, null, null, 1],
+//            [ 1, null, null, null]
+//        ];
+
+        var chord = d3.layout.chord()
+                .padding(.05)
+                .sortSubgroups(d3.descending)
+                .matrix(matrix);
+
+        var width = 1200,
+                height = 900,
+                innerRadius = Math.min(width, height) * .41,
+                outerRadius = innerRadius * 1.1;
+
+        var fill = d3.scale.ordinal()
+                .domain(d3.range(4))
+                .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
+
+        var svg = d3.select("body").append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+        var positionsArray = appendLayoutData(preparePositionsArray(sequence))
+        var interactionsArray = prepareInteractionsArray(positionsArray,interactions)
+        console.log("interactionsArray.length: "+interactionsArray.length)
+        svg.append("g").selectAll("path")
+                .data(positionsArray)
+                .enter().append("path")
+                .style("fill", function(d) { return d.position%2==0?"red":"white"})//fill(d.index); })
+                .style("stroke", function(d) { return "green"})//fill(d.index); })
+                .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+                .on("mouseover", function(d){
+                    $(".chord path[sourcePosition="+ d.position+"]").css("opacity",1)
+                    $(".chord path[targetPosition="+ d.position+"]").css("opacity",1)
+                })
+                .on("mouseout", function(d){
+                    $(".chord path").css("opacity",0)
+                });
+
+        function ticks(positionsArray,step){
+            var resultArray = []
+            var length = positionsArray.length
+            for(var i=0;i<length;i+=step){
+                var d = positionsArray[i]
+                var angle = ((d.endAngle - d.startAngle) / 2) + d.startAngle;
+                resultArray.push({
+                    angle:angle,
+                    label: i
+                })
+            }
+            return resultArray
+        }
+
+        var ticks = svg.append("g").selectAll("g")
+                .data(ticks(positionsArray,20))
+                .enter().append("g")
+                .attr("transform", function(d) {
+                    var translate = outerRadius + (0.01*outerRadius)
+                    return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+                            + "translate(" + translate + ",0)";
+                });
+
+        ticks.append("line")
+                .attr("x1", 1)
+                .attr("y1", 0)
+                .attr("x2", 5)
+                .attr("y2", 0)
+                .style("stroke", "#000");
+
+        ticks.append("text")
+                .attr("x", 8)
+                .attr("dy", ".35em")
+                .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
+                .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+                .text(function(d) { return d.label; });
+
+        svg.append("g")
+                .attr("class", "chord")
+                .selectAll("path")
+                .data(interactionsArray)
+                .enter().append("path")
+                .attr("d", d3.svg.chord().radius(innerRadius))
+                .attr("sourcePosition",function(d){return d.source.position})
+                .attr("targetPosition",function(d){return d.target.position})
+                .style("fill", "red")
+                .style("opacity", 0.0);
+
+//        function fade(opacity) {
+//            return function(g, i) {
+//                svg.selectAll(".chord path")
+//                        .filter(function(d) {
+//                            return d.source.position == i || d.target.position == i; })
+//                        .style("opacity", opacity);
+//            };
+//        }
+    }
+
+
+</script>
+</body>
+</html>
