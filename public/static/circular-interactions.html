@@ -13,6 +13,7 @@
     <script type="text/javascript" src="../libraries/canvg/rgbcolor.js"></script>
     <script type="text/javascript" src="../libraries/canvg/StackBlur.js"></script>
     <script type="text/javascript" src="../libraries/canvg/canvg.js"></script>
+    <script type="text/javascript" src="../libraries/shortcut.js"></script>
 
 
     <script src="utils.js"></script>
@@ -38,6 +39,10 @@
         var exportButton = $('<input style="display: block;" id="scatter-to-png" type="button" value="export as image"/>')
         $("body").append(exportButton);
         toPNGButton(exportButton,"body svg")
+
+        shortcut.add("Ctrl+Shift+X",function() {
+            $(exportButton).trigger('click');
+        });
 
         function onFileLoadCallback(fileInput,tsvParsedDataCallback){
             var file = $(fileInput).get()[0].files[0]
@@ -109,16 +114,19 @@
         return positionsArray;
     }
 
+    var CHORD_MARGIN_SHARE = 1/5
     function prepareInteractionsArray(positionsArray, interactions) {
         var resultArray = []
         for(var i=0; i!=positionsArray.length;++i){
             var startPositionData = positionsArray[i]
             var interactionsArray = interactions.coeffs[i]
             if(interactionsArray) {
+                var angleSpan = startPositionData.endAngle - startPositionData.startAngle
+
                 var source = {
                     position: i,
-                    startAngle: startPositionData.startAngle,
-                    endAngle: startPositionData.endAngle
+                    startAngle: startPositionData.startAngle+(angleSpan*CHORD_MARGIN_SHARE),
+                    endAngle: startPositionData.endAngle-(angleSpan*CHORD_MARGIN_SHARE)
                 }
 
                 for (var j = i+1; j < interactionsArray.length; ++j) {
@@ -127,8 +135,8 @@
                         var endPositionData = positionsArray[j]
                         var target = {
                             position: j,
-                            startAngle: (endPositionData.startAngle+endPositionData.endAngle)/2,
-                            endAngle: (endPositionData.startAngle+endPositionData.endAngle)/2
+                            startAngle: endPositionData.startAngle+(angleSpan*CHORD_MARGIN_SHARE),
+                            endAngle: endPositionData.endAngle-(angleSpan*CHORD_MARGIN_SHARE)
                         }
 
                         resultArray.push({
@@ -144,8 +152,8 @@
     }
 
 
-    var width = 1200,
-            height = 900,
+    var width = 3072
+            height = 2304,
             innerRadius = Math.min(width, height) * .37,
             outerRadius = innerRadius * 1.1;
 
@@ -159,7 +167,11 @@
             .append("g")
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-
+    var NOT_ACTIVE_CHORD_OPACITY = 0.17
+    var POSITIVE_INTERACTIONS_COLOR = "green"
+    var NEGATIVE_INTERACTIONS_COLOR = "red"
+//    var POSITIVE_INTERACTIONS_COLOR = "black"
+//    var NEGATIVE_INTERACTIONS_COLOR = "yellow"
     function drawMiddleRingAndChords(paramData){
         var interactions = new InteractionsData(paramData)
 
@@ -177,7 +189,7 @@
                     $(".chord path[targetPosition="+ d.position+"]").css("opacity",1)
                 })
                 .on("mouseout", function(d){
-                    $(".chord path").css("opacity",0.1)
+                    $(".chord path").css("opacity",NOT_ACTIVE_CHORD_OPACITY)
                 });
 
         svg.append("g").selectAll("path")
@@ -244,6 +256,9 @@
                 .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
                 .text(function(d) { return d.label; });
 
+
+
+
         svg.append("g")
                 .attr("class", "chord")
                 .selectAll("path")
@@ -256,11 +271,11 @@
                     var interactionScore = interactions.coeffs[d.source.position][d.target.position]
                     console.log(interactionScore)
                     if(interactionScore>=0)
-                        return "black"
+                        return POSITIVE_INTERACTIONS_COLOR
                     else
-                        return "yellow"
+                        return NEGATIVE_INTERACTIONS_COLOR
                 })
-                .style("opacity", 0.1);
+                .style("opacity", NOT_ACTIVE_CHORD_OPACITY);
 
 //        function fade(opacity) {
 //            return function(g, i) {

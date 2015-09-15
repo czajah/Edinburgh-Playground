@@ -15,7 +15,7 @@ body {
     /*opacity: 0.1;*/
 }
 .chord path {
-    fill-opacity: .87;
+    fill-opacity: .97;
     stroke: #000;
     stroke-width: .5px;
 }
