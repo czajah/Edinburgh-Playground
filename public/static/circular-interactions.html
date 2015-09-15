@@ -167,7 +167,9 @@
             .append("g")
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-    var NOT_ACTIVE_CHORD_OPACITY = 0.17
+    var NOT_ACTIVE_CHORD_OPACITY = 0.63
+    var FADED_CHORD_OPACITY = 0.13
+
     var POSITIVE_INTERACTIONS_COLOR = "#fee391"
     var NEGATIVE_INTERACTIONS_COLOR = "#d95f0e"
 
@@ -206,6 +208,7 @@
                 .style("stroke", function(d) { return "green"})//fill(d.index); })
                 .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
                 .on("mouseover", function(d){
+                    $(".chord path").css("opacity",FADED_CHORD_OPACITY)
                     $(".chord path[sourcePosition="+ d.position+"]").css("opacity",1)
                     $(".chord path[targetPosition="+ d.position+"]").css("opacity",1)
                 })
