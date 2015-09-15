@@ -168,8 +168,27 @@
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
     var NOT_ACTIVE_CHORD_OPACITY = 0.17
-    var POSITIVE_INTERACTIONS_COLOR = "#CDB831"
-    var NEGATIVE_INTERACTIONS_COLOR = "#EF47FF"
+    var POSITIVE_INTERACTIONS_COLOR = "#fee391"
+    var NEGATIVE_INTERACTIONS_COLOR = "#d95f0e"
+
+    var ODD_POSITION_COLOR = "#993404"
+    var EVEN_POSITION_COLOR = "#ffffd4"
+
+    const OUTER_RING_EVEN_POSITION_COLOR = "#fee391";
+    const OUTER_RING_ODD_POSITION_COLOR = "#fec44f";
+    const INNER_RING_EVEN_POSITION_COLOR = "#fe9929";
+    const INNER_RING_ODD_POSITION_COLOR = "#d95f0e";
+
+
+
+//    const OUTER_RING_EVEN_POSITION_COLOR = "#CDB831";
+//    const OUTER_RING_ODD_POSITION_COLOR = "brown";
+//    const INNER_RING_EVEN_POSITION_COLOR = "#EF47FF";
+//    const INNER_RING_ODD_POSITION_COLOR = "blue";
+
+
+//    var POSITIVE_INTERACTIONS_COLOR = "#CDB831"
+//    var NEGATIVE_INTERACTIONS_COLOR = "#EF47FF"
 //    var POSITIVE_INTERACTIONS_COLOR = "green"
 //    var NEGATIVE_INTERACTIONS_COLOR = "red"
 //    var POSITIVE_INTERACTIONS_COLOR = "black"
@@ -183,7 +202,7 @@
         svg.append("g").selectAll("path")
                 .data(positionsArray)
                 .enter().append("path")
-                .style("fill", function(d) { return d.position%2==0?"red":"white"})//fill(d.index); })
+                .style("fill", function(d) { return d.position%2==0?EVEN_POSITION_COLOR:ODD_POSITION_COLOR})//fill(d.index); })
                 .style("stroke", function(d) { return "green"})//fill(d.index); })
                 .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
                 .on("mouseover", function(d){
@@ -333,7 +352,8 @@
         svg.append("g").selectAll("path")
                 .data(paramData)
                 .enter().append("path")
-                .style("fill", function(d) { return d.position%2==0?"#CDB831":"brown"})//fill(d.index); })
+                .style("fill", function(d) {
+                    return d.position%2==0? OUTER_RING_EVEN_POSITION_COLOR: OUTER_RING_ODD_POSITION_COLOR})//fill(d.index); })
                 .style("stroke", function(d) { return "green"})//fill(d.index); })
                 .attr("d", d3.svg.arc().innerRadius(outerRadius))
 
@@ -398,7 +418,8 @@
         svg.append("g").selectAll("path")
                 .data(paramData)
                 .enter().append("path")
-                .style("fill", function(d) { return d.position%2==0?"#EF47FF":"blue"})//fill(d.index); })
+                .style("fill", function(d) {
+                    return d.position%2==0? INNER_RING_EVEN_POSITION_COLOR: INNER_RING_ODD_POSITION_COLOR})//fill(d.index); })
                 .style("stroke", function(d) { return "green"})//fill(d.index); })
                 .attr("d", d3.svg.arc())
 
