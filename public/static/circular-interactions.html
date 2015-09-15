@@ -155,7 +155,7 @@
     var width = 3072
             height = 2304,
             innerRadius = Math.min(width, height) * .37,
-            outerRadius = innerRadius * 1.1;
+            outerRadius = innerRadius + 40;
 
     var fill = d3.scale.ordinal()
             .domain(d3.range(4))
@@ -168,8 +168,10 @@
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
     var NOT_ACTIVE_CHORD_OPACITY = 0.17
-    var POSITIVE_INTERACTIONS_COLOR = "green"
-    var NEGATIVE_INTERACTIONS_COLOR = "red"
+    var POSITIVE_INTERACTIONS_COLOR = "#CDB831"
+    var NEGATIVE_INTERACTIONS_COLOR = "#EF47FF"
+//    var POSITIVE_INTERACTIONS_COLOR = "green"
+//    var NEGATIVE_INTERACTIONS_COLOR = "red"
 //    var POSITIVE_INTERACTIONS_COLOR = "black"
 //    var NEGATIVE_INTERACTIONS_COLOR = "yellow"
     function drawMiddleRingAndChords(paramData){
