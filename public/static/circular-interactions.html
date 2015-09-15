@@ -152,8 +152,8 @@
     }
 
 
-    var width = 3072
-            height = 2304,
+    var width = 2048
+            height = 1152,
             innerRadius = Math.min(width, height) * .37,
             outerRadius = innerRadius + 40;
 
@@ -237,11 +237,9 @@
         function ticks(positionsArray,step){
             var resultArray = []
             var length = positionsArray.length
-            console.log("1")
             for(var i=0;i<length;i+=step){
                 var d = positionsArray[i]
                 var angle = ((d.endAngle - d.startAngle) / 2) + d.startAngle;
-                console.log("2")
                 resultArray.push({
                     angle:angle,
                     label: i
@@ -250,9 +248,28 @@
             return resultArray
         }
 
-        var ticksData = ticks(positionsArray,20)
+
+        var smallTicksData = ticks(positionsArray,10)
         console.log("ticksData")
         console.log(ticksData)
+        var smallTicks = svg.append("g").selectAll("g")
+                .data(smallTicksData)
+                .enter().append("g")
+                .attr("transform", function(d) {
+
+                    var translate = outerRadius + 50
+                    return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+                            + "translate(" + translate + ",0)";
+                });
+
+        smallTicks.append("line")
+                .attr("x1", 1)
+                .attr("y1", 0)
+                .attr("x2", 5)
+                .attr("y2", 0)
+                .style("stroke", "#000");
+
+        var ticksData = ticks(positionsArray,20)
         var ticks = svg.append("g").selectAll("g")
                 .data(ticksData)
                 .enter().append("g")
@@ -273,6 +290,7 @@
         ticks.append("text")
                 .attr("x", 8)
                 .attr("dy", ".35em")
+                .attr("font-size",20)
                 .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
                 .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
                 .text(function(d) { return d.label; });
