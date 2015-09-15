@@ -115,22 +115,6 @@
     function drawAll(paramData){
         var interactions = new InteractionsData(paramData)
 
-        var matrix = interactions.getInteractionsMatrix(20)
-
-        console.log(matrix)
-
-//        matrix = [
-//            [null,  1, null, null],
-//            [ null, null, 1, null],
-//            [ null, null, null, 1],
-//            [ 1, null, null, null]
-//        ];
-
-        var chord = d3.layout.chord()
-                .padding(.05)
-                .sortSubgroups(d3.descending)
-                .matrix(matrix);
-
         var width = 1200,
                 height = 900,
                 innerRadius = Math.min(width, height) * .41,
