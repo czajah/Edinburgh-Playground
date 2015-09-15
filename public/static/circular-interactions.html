@@ -35,6 +35,10 @@
         var viena="....(((..(.(.((((.(....).))))).)...)))..........(((((...)))))............(((((......((.(.......((((((((((((..((...((((.(((((((...((.((((((...(((.(((.((((......))))))))))....)))))).)).....))))))).)))(((.(...(((((((.((..((((...))))..)).))))).))...).))).)......)).)(((((((((((...((((......))))..)))))).....)))))))))))))).)).).))...)))))"
 
 
+        var exportButton = $('<input style="display: block;" id="scatter-to-png" type="button" value="export as image"/>')
+        $("body").append(exportButton);
+        toPNGButton(exportButton,"body svg")
+
         function onFileLoadCallback(fileInput,tsvParsedDataCallback){
             var file = $(fileInput).get()[0].files[0]
             console.log(fileInput)
