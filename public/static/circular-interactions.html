@@ -78,6 +78,13 @@
                     })
                 })
 
+                var featuresDataInput = $("<input type='file' id='fileinput-features' />")
+                $("#inputs").append(featuresDataInput).change(function(){
+                    onFileLoadCallback(featuresDataInput,function(parsedData){
+                        drawAnnotations(parsedData,positionsArray)
+                    })
+                })
+
             })
 
         })
@@ -154,8 +161,10 @@
 
     var width = 2048
             height = 1152,
-            innerRadius = Math.min(width, height) * .37,
+            innerRadius = Math.min(width, height) * .27,
             outerRadius = innerRadius + 40;
+
+    outerRingDrawn = false
 
     var fill = d3.scale.ordinal()
             .domain(d3.range(4))
@@ -216,25 +225,25 @@
                     $(".chord path").css("opacity",NOT_ACTIVE_CHORD_OPACITY)
                 });
 
-        svg.append("g").selectAll("path")
-                .data([{
-                    startAngle:0,
-                    endAngle:2*Math.PI
-                }])
-                .enter().append("path")
-                .style("fill", function(d) { return "green"})
-                .style("stroke", function(d) { return "green"})
-                .attr("d", d3.svg.arc().innerRadius(outerRadius+40).outerRadius(outerRadius+41))
+//        svg.append("g").selectAll("path")
+//                .data([{
+//                    startAngle:0,
+//                    endAngle:2*Math.PI
+//                }])
+//                .enter().append("path")
+//                .style("fill", function(d) { return "green"})
+//                .style("stroke", function(d) { return "green"})
+//                .attr("d", d3.svg.arc().innerRadius(outerRadius+40).outerRadius(outerRadius+41))
 
-        svg.append("g").selectAll("path")
-                .data([{
-                    startAngle:0,
-                    endAngle:2*Math.PI
-                }])
-                .enter().append("path")
-                .style("fill", function(d) { return "green"})
-                .style("stroke", function(d) { return "green"})
-                .attr("d", d3.svg.arc().innerRadius(innerRadius-41).outerRadius(innerRadius-40))
+//        svg.append("g").selectAll("path")
+//                .data([{
+//                    startAngle:0,
+//                    endAngle:2*Math.PI
+//                }])
+//                .enter().append("path")
+//                .style("fill", function(d) { return "green"})
+//                .style("stroke", function(d) { return "green"})
+//                .attr("d", d3.svg.arc().innerRadius(innerRadius-41).outerRadius(innerRadius-40))
 
 
         function ticks(positionsArray,step){
@@ -251,16 +260,16 @@
             return resultArray
         }
 
-
         var smallTicksData = ticks(positionsArray,10)
         console.log("ticksData")
         console.log(ticksData)
         var smallTicks = svg.append("g").selectAll("g")
                 .data(smallTicksData)
                 .enter().append("g")
+                .attr("class", "ticks smallTicks")
                 .attr("transform", function(d) {
 
-                    var translate = outerRadius + 50
+                    var translate = outerRadius + 5
                     return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
                             + "translate(" + translate + ",0)";
                 });
@@ -276,9 +285,10 @@
         var ticks = svg.append("g").selectAll("g")
                 .data(ticksData)
                 .enter().append("g")
+                .attr("class", "ticks")
                 .attr("transform", function(d) {
 
-                    var translate = outerRadius + 50
+                    var translate = outerRadius + 5
                     return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
                             + "translate(" + translate + ",0)";
                 });
@@ -306,7 +316,7 @@
                 .selectAll("path")
                 .data(interactionsArray)
                 .enter().append("path")
-                .attr("d", d3.svg.chord().radius(innerRadius-41))
+                .attr("d", d3.svg.chord().radius(innerRadius))
                 .attr("sourcePosition",function(d){return d.source.position})
                 .attr("targetPosition",function(d){return d.target.position})
                 .style("fill", function(d){
@@ -339,7 +349,7 @@
 
     function drawOuterRing(paramData,positionsArray){
         console.log("drawOuterRing()")
-
+        outerRingDrawn = true
         function appendLayoutData(paramDataArray, positionsArray){
             var resultArray = []
             var length = positionsArray.length
@@ -364,6 +374,24 @@
 
         console.log(paramData)
         console.log(positionsArray)
+
+        var rotRegexp = /rotate\((.*)\)translate.*/
+        svg.selectAll("g.ticks").attr("transform", function(d){
+            var match = rotRegexp.exec(d3.select(this).attr("transform"))
+            var result = "rotate("+match[1]+")translate("+(outerRadius+50)+")";
+            console.log(result);
+            return "rotate("+match[1]+")translate("+(outerRadius+50)+")";
+        })
+
+        svg.append("g").selectAll("path")
+                .data([{
+                    startAngle:0,
+                    endAngle:2*Math.PI
+                }])
+                .enter().append("path")
+                .style("fill", function(d) { return "green"})
+                .style("stroke", function(d) { return "green"})
+                .attr("d", d3.svg.arc().innerRadius(outerRadius+40).outerRadius(outerRadius+41))
 
         var div = d3.select("body").append("div")
                 .attr("class", "tooltip")
@@ -431,6 +459,21 @@
         console.log(paramData)
         console.log(positionsArray)
 
+
+
+        svg.selectAll("g.chord path").attr("d", d3.svg.chord().radius(innerRadius-41))
+
+
+        svg.append("g").selectAll("path")
+                .data([{
+                    startAngle:0,
+                    endAngle:2*Math.PI
+                }])
+                .enter().append("path")
+                .style("fill", function(d) { return "green"})
+                .style("stroke", function(d) { return "green"})
+                .attr("d", d3.svg.arc().innerRadius(innerRadius-41).outerRadius(innerRadius-40))
+
         var div = d3.select("body").append("div")
                 .attr("class", "tooltip")
                 .style("opacity", 0);
@@ -467,6 +510,107 @@
 
 
     }
+
+    function drawAnnotations(paramData,positionsArray){
+        console.log(paramData)
+        console.log("drawAnnotations()")
+
+        function appendLayoutData(paramDataArray, positionsArray){
+            var resultArray = []
+            var length = positionsArray.length
+
+            for(var i=0;i!=paramDataArray.length;++i){
+                var startPosition = +paramDataArray[i].start
+                var endPosition = +paramDataArray[i].end
+
+                console.log(startPosition)
+                console.log(endPosition)
+
+                var startPositionData = positionsArray[startPosition]
+                var endPositionData = positionsArray[endPosition]
+                console.log(startPositionData)
+                console.log(endPositionData)
+
+                var copy = $.extend( {}, paramDataArray[i])
+                resultArray[i] = copy
+                resultArray[i].startAngle=startPositionData.startAngle;
+                resultArray[i].endAngle=endPositionData.endAngle;
+//                resultArray[i].angle=resultArray[i].startAngle+((resultArray[i].endAngle-resultArray[i].startAngle)/2)
+                resultArray[i].color=paramDataArray[i].color;
+                resultArray[i].title=paramDataArray[i].title;
+            }
+            return resultArray;
+        }
+
+        paramData = appendLayoutData(paramData,positionsArray)
+
+
+
+        console.log(paramData)
+        console.log(positionsArray)
+
+        var translate = outerRingDrawn ? outerRadius + 225 : outerRadius + 150;
+        var rr = outerRingDrawn ? 175 : 75;
+
+        var ticks = svg.append("g").selectAll("g")
+                .data(paramData)
+                .enter().append("g")
+                .attr("class", "annotation")
+                .attr("transform", function(d) {
+
+                    return "rotate(" + (d.startAngle * 180 / Math.PI - 90) + ")"
+                            + "translate(" + translate + ",0)";
+                });
+
+        ticks.append("text")
+                .attr("x", 8)
+                .attr("dy", ".35em")
+                .attr("font-size",20)
+                .attr("transform", function(d) { return "rotate(90)translate(-10)" })
+//                .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+                .text(function(d) { return d.title; });
+
+
+
+        var div = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+
+
+
+        svg.append("g").selectAll("path")
+                .data(paramData)
+                .enter().append("path")
+                .style("fill", function(d) {
+                    return d.color
+                })
+                .style("stroke", function(d) { return "green"})
+                .attr("d", d3.svg.arc().innerRadius(outerRadius+rr).outerRadius(outerRadius+rr+50))
+
+                .on("mouseover", function(d){
+                    div.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                    div	.html(""+d.title)
+                            .style("left", (d3.event.pageX) + "px")
+                            .style("top", (d3.event.pageY - 28) + "px");
+
+                })
+                .on("mousemove", function(d){
+                    div
+                            .style("left", (d3.event.pageX) + "px")
+                            .style("top", (d3.event.pageY - 28) + "px");
+
+                })
+                .on("mouseout", function(d){
+                    div.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                });
+
+    }
+
 
 
 </script>
